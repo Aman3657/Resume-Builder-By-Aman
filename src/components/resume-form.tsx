@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import type { ResumeData, Experience, Education, Skill } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { refineResumeContent } from '@/ai/flows/refine-resume-content';
 import { useToast } from '@/hooks/use-toast';
-import { Briefcase, GraduationCap, Lightbulb, Loader2, PlusCircle, Sparkles, Trash2, User, AlertCircle } from 'lucide-react';
+import { Briefcase, GraduationCap, Lightbulb, Loader2, PlusCircle, Sparkles, Trash2, User, AlertCircle, Upload } from 'lucide-react';
 
 interface ResumeFormProps {
   resumeData: ResumeData;
@@ -23,6 +23,7 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, setResumeData }) =>
   const [refiningStates, setRefiningStates] = useState<Record<string, boolean>>({});
   const [newSkill, setNewSkill] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleChange = (section: keyof ResumeData, index: number | null, field: string, value: string) => {
     setResumeData(prev => {
@@ -33,6 +34,23 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, setResumeData }) =>
       newSection[index] = { ...newSection[index], [field]: value };
       return { ...prev, [section]: newSection };
     });
+  };
+  
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setResumeData(prev => ({
+          ...prev,
+          personalInfo: {
+            ...prev.personalInfo,
+            profilePicture: reader.result as string,
+          },
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const addItem = (section: 'experience' | 'education' | 'skills') => {
@@ -105,9 +123,27 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, setResumeData }) =>
           <AccordionItem value="personal-info">
             <AccordionTrigger className="text-lg font-semibold"><User className="mr-2" />Personal Information</AccordionTrigger>
             <AccordionContent className="space-y-4 pt-4">
-              <div className="space-y-2">
-                <Label htmlFor="profilePicture">Profile Picture URL</Label>
-                <Input id="profilePicture" value={resumeData.personalInfo.profilePicture || ''} onChange={e => handleChange('personalInfo', null, 'profilePicture', e.target.value)} />
+               <div className="space-y-2">
+                <Label htmlFor="profilePicture">Profile Picture</Label>
+                <div className="flex items-center gap-2">
+                  <Input 
+                    id="profilePicture" 
+                    placeholder="Enter image URL"
+                    value={resumeData.personalInfo.profilePicture || ''} 
+                    onChange={e => handleChange('personalInfo', null, 'profilePicture', e.target.value)} 
+                  />
+                  <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Upload
+                  </Button>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    className="hidden"
+                    accept="image/*"
+                  />
+                </div>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
