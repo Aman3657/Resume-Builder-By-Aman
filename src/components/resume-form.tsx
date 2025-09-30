@@ -37,14 +37,13 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, setResumeData }) =>
   const addItem = (section: 'experience' | 'education' | 'skills') => {
     setResumeData(prev => {
       let newItem;
-      const newId = crypto.randomUUID();
       if (section === 'experience') {
-        newItem = { id: newId, company: '', role: '', startDate: '', endDate: '', description: '' };
+        newItem = { id: crypto.randomUUID(), company: '', role: '', startDate: '', endDate: '', description: '' };
       } else if (section === 'education') {
-        newItem = { id: newId, institution: '', degree: '', startDate: '', endDate: '' };
+        newItem = { id: crypto.randomUUID(), institution: '', degree: '', startDate: '', endDate: '' };
       } else {
         if (!newSkill.trim()) return prev;
-        newItem = { id: newId, name: newSkill.trim() };
+        newItem = { id: crypto.randomUUID(), name: newSkill.trim() };
         setNewSkill('');
       }
       return { ...prev, [section]: [...prev[section], newItem] };
@@ -101,6 +100,10 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, setResumeData }) =>
           <AccordionItem value="personal-info">
             <AccordionTrigger className="text-lg font-semibold"><User className="mr-2" />Personal Information</AccordionTrigger>
             <AccordionContent className="space-y-4 pt-4">
+              <div className="space-y-2">
+                <Label htmlFor="profilePicture">Profile Picture URL</Label>
+                <Input id="profilePicture" value={resumeData.personalInfo.profilePicture || ''} onChange={e => handleChange('personalInfo', null, 'profilePicture', e.target.value)} />
+              </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="name">Full Name</Label>

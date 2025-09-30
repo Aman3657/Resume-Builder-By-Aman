@@ -15,16 +15,29 @@ const ResumePreview = React.forwardRef<HTMLDivElement, ResumePreviewProps>(({ re
 
   return (
     <div ref={ref} className="bg-white text-gray-800 p-8 shadow-lg w-full h-full aspect-[210/297] overflow-auto">
-      <header className="text-center mb-8">
-        <h1 className="font-headline text-4xl font-bold tracking-tight text-gray-900">{personalInfo.name || 'Your Name'}</h1>
-        <div className="flex justify-center items-center flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600 mt-2">
-          {personalInfo.email && <div className="flex items-center gap-1"><Mail size={14} /><span>{personalInfo.email}</span></div>}
-          {personalInfo.phone && <div className="flex items-center gap-1"><Phone size={14} /><span>{personalInfo.phone}</span></div>}
-          {personalInfo.address && <div className="flex items-center gap-1"><MapPin size={14} /><span>{personalInfo.address}</span></div>}
-        </div>
-        <div className="flex justify-center items-center flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600 mt-1">
-          {personalInfo.linkedin && <a href={personalInfo.linkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:underline text-primary/90"><Linkedin size={14} /><span>LinkedIn</span></a>}
-          {personalInfo.website && <a href={personalInfo.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:underline text-primary/90"><LinkIcon size={14} /><span>Portfolio</span></a>}
+      <header className="flex items-center mb-8 gap-6">
+        {personalInfo.profilePicture && (
+          <div className="relative h-24 w-24 rounded-full overflow-hidden flex-shrink-0">
+            <Image
+              src={personalInfo.profilePicture}
+              alt={personalInfo.name}
+              fill
+              style={{ objectFit: 'cover' }}
+              data-ai-hint="profile person"
+            />
+          </div>
+        )}
+        <div className="flex-grow">
+          <h1 className="font-headline text-4xl font-bold tracking-tight text-gray-900">{personalInfo.name || 'Your Name'}</h1>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600 mt-2">
+            {personalInfo.email && <div className="flex items-center gap-1"><Mail size={14} /><span>{personalInfo.email}</span></div>}
+            {personalInfo.phone && <div className="flex items-center gap-1"><Phone size={14} /><span>{personalInfo.phone}</span></div>}
+            {personalInfo.address && <div className="flex items-center gap-1"><MapPin size={14} /><span>{personalInfo.address}</span></div>}
+          </div>
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600 mt-1">
+            {personalInfo.linkedin && <a href={personalInfo.linkedin} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:underline text-primary/90"><Linkedin size={14} /><span>LinkedIn</span></a>}
+            {personalInfo.website && <a href={personalInfo.website} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:underline text-primary/90"><LinkIcon size={14} /><span>Portfolio</span></a>}
+          </div>
         </div>
       </header>
 

@@ -5,7 +5,7 @@ export type PersonalInfo = {
   address: string;
   linkedin: string;
   website: string;
-  profilePicture: string;
+  profilePicture?: string;
 };
 
 export type Experience = {
