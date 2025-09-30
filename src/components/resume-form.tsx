@@ -37,14 +37,13 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, setResumeData }) =>
   const addItem = (section: 'experience' | 'education' | 'skills') => {
     setResumeData(prev => {
       let newItem;
-      const id = crypto.randomUUID();
       if (section === 'experience') {
-        newItem = { id, company: '', role: '', startDate: '', endDate: '', description: '' };
+        newItem = { id: crypto.randomUUID(), company: '', role: '', startDate: '', endDate: '', description: '' };
       } else if (section === 'education') {
-        newItem = { id, institution: '', degree: '', startDate: '', endDate: '' };
+        newItem = { id: crypto.randomUUID(), institution: '', degree: '', startDate: '', endDate: '' };
       } else {
         if (!newSkill.trim()) return prev;
-        newItem = { id, name: newSkill.trim() };
+        newItem = { id: crypto.randomUUID(), name: newSkill.trim() };
         setNewSkill('');
       }
       return { ...prev, [section]: [...prev[section], newItem] };
