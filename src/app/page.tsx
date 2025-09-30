@@ -19,7 +19,7 @@ export default function Home() {
   
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="no-print sticky top-0 z-20 flex items-center justify-between border-b bg-background/80 px-4 py-3 shadow-sm backdrop-blur-sm md:px-6">
+      <header className="no-print sticky top-0 z-20 flex items-center justify-between border-b bg-background/80 px-4 py-3 shadow-sm backdrop-blur-sm md:px-6 gap-4">
         <div className="flex items-center gap-3">
           <Logo className="h-8 w-8 text-primary" />
           <h1 className="font-headline text-2xl font-bold md:text-3xl">
