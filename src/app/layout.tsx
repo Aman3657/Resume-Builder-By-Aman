@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'OpenAman Resume builder',
+  title: 'Resume Builder by Aman',
   description: 'Free Full-Stack Resume Maker',
 };
 
