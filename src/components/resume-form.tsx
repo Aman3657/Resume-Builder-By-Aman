@@ -8,10 +8,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { refineResumeContent } from '@/ai/flows/refine-resume-content';
 import { useToast } from '@/hooks/use-toast';
-import { Briefcase, GraduationCap, Lightbulb, Loader2, PlusCircle, Sparkles, Trash2, User } from 'lucide-react';
+import { Briefcase, GraduationCap, Lightbulb, Loader2, PlusCircle, Sparkles, Trash2, User, AlertCircle } from 'lucide-react';
 
 interface ResumeFormProps {
   resumeData: ResumeData;
@@ -22,6 +22,7 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, setResumeData }) =>
   const { toast } = useToast();
   const [refiningStates, setRefiningStates] = useState<Record<string, boolean>>({});
   const [newSkill, setNewSkill] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   const handleChange = (section: keyof ResumeData, index: number | null, field: string, value: string) => {
     setResumeData(prev => {
@@ -58,6 +59,7 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, setResumeData }) =>
   };
 
   const handleRefine = async (experienceId: string) => {
+    setError(null);
     setRefiningStates(prev => ({...prev, [experienceId]: true}));
     try {
       const experienceIndex = resumeData.experience.findIndex(exp => exp.id === experienceId);
@@ -65,11 +67,7 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, setResumeData }) =>
       const currentText = resumeData.experience[experienceIndex].description;
 
       if (!currentText.trim()) {
-        toast({
-          variant: 'default',
-          title: 'Empty Content',
-          description: 'Please write a description first before using AI refinement.',
-        });
+        setError('Please write a description first before using AI refinement.');
         return;
       }
       
@@ -84,7 +82,7 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, setResumeData }) =>
       }
     } catch (error) {
       console.error(error);
-      toast({ variant: 'destructive', title: 'Error', description: 'Failed to refine content.' });
+      setError('Failed to refine content.');
     } finally {
       setRefiningStates(prev => ({...prev, [experienceId]: false}));
     }
@@ -96,6 +94,13 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, setResumeData }) =>
         <CardTitle className="font-headline text-2xl">Create Your Resume</CardTitle>
       </CardHeader>
       <CardContent>
+        {error && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Error</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
         <Accordion type="multiple" defaultValue={['personal-info', 'experience']} className="w-full">
           <AccordionItem value="personal-info">
             <AccordionTrigger className="text-lg font-semibold"><User className="mr-2" />Personal Information</AccordionTrigger>
