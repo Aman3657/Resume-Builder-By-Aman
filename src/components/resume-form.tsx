@@ -126,15 +126,9 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, setResumeData }) =>
                <div className="space-y-2">
                 <Label htmlFor="profilePicture">Profile Picture</Label>
                 <div className="flex items-center gap-2">
-                  <Input 
-                    id="profilePicture" 
-                    placeholder="Enter image URL"
-                    value={resumeData.personalInfo.profilePicture || ''} 
-                    onChange={e => handleChange('personalInfo', null, 'profilePicture', e.target.value)} 
-                  />
                   <Button variant="outline" onClick={() => fileInputRef.current?.click()}>
                     <Upload className="mr-2 h-4 w-4" />
-                    Upload
+                    Upload Image
                   </Button>
                   <input
                     type="file"
