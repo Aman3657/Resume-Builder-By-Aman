@@ -23,7 +23,7 @@ export default function Home() {
         <div className="flex items-center gap-3">
           <Logo className="h-8 w-8 text-primary" />
           <h1 className="font-headline text-2xl font-bold md:text-3xl">
-            ResumeFlow
+            OpenAman Resume builder
           </h1>
         </div>
         <Button onClick={handlePrint} size="lg">
