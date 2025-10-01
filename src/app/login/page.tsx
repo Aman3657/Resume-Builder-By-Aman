@@ -12,7 +12,7 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // If the user is logged in (and we're not in a loading state), redirect to home.
+    // If we're not loading and the user is logged in, redirect them to the home page.
     if (!loading && user) {
       router.push('/');
     }
