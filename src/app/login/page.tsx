@@ -13,24 +13,24 @@ import { Loader2 } from 'lucide-react';
 export default function LoginPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-  const [localLoading, setLocalLoading] = useState(true);
+  const [isProcessingRedirect, setIsProcessingRedirect] = useState(true);
 
   useEffect(() => {
-    const checkRedirect = async () => {
+    const processRedirect = async () => {
       try {
         const result = await getRedirectResult(auth);
-        if (result) {
-          router.push('/');
+        if (result && result.user) {
+          // A redirect result has been processed. The onAuthStateChanged
+          // listener in AuthProvider will handle the user state and routing.
         }
       } catch (error) {
         console.error('Error handling redirect result:', error);
       } finally {
-        // Even if there's no redirect result, we are done checking.
-        setLocalLoading(false);
+        setIsProcessingRedirect(false);
       }
     };
-    checkRedirect();
-  }, [router]);
+    processRedirect();
+  }, []);
 
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
@@ -40,16 +40,20 @@ export default function LoginPage() {
       console.error('Error initiating sign-in with redirect:', error);
     }
   };
-
+  
+  // This effect handles routing after the redirect is processed and user state is known.
   useEffect(() => {
     if (!authLoading && user) {
       router.push('/');
     }
   }, [user, authLoading, router]);
-  
-  const isLoading = authLoading || localLoading;
 
-  if (isLoading || (!authLoading && user)) {
+  // We should show a loader while auth state is being determined,
+  // while processing a redirect, or if we know the user is logged in
+  // and are about to redirect them.
+  const isLoading = authLoading || isProcessingRedirect || (!authLoading && user);
+
+  if (isLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -58,6 +62,7 @@ export default function LoginPage() {
     );
   }
 
+  // Only show the login page if we are not loading and there is no user.
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
       <div className="w-full max-w-sm">
