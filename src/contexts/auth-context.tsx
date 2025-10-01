@@ -2,7 +2,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User, onAuthStateChanged } from 'firebase/auth';
+import { User, onAuthStateChanged, getRedirectResult } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter, usePathname } from 'next/navigation';
 
@@ -20,17 +20,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
+    // This effect runs once on mount to check for a redirect result.
+    getRedirectResult(auth)
+      .then((result) => {
+        // If a redirect result is processed, the onAuthStateChanged listener below
+        // will handle setting the user. This block can be used for additional
+        // logic if needed, but for now we let the listener handle it.
+      })
+      .catch((error) => {
+        console.error("Error processing redirect result:", error);
+      })
+      .finally(() => {
+        // After attempting to process the redirect, set up the regular auth state listener.
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+          setUser(user);
+          setLoading(false);
+        });
+        
+        // Return the unsubscribe function to be called on cleanup.
+        return () => unsubscribe();
+      });
   }, []);
 
   useEffect(() => {
-    // This effect should only handle redirecting unauthenticated users.
-    // Redirecting authenticated users is handled in the login page itself.
+    // This effect handles redirecting unauthenticated users away from protected pages.
     if (!loading && !user && pathname !== '/login') {
       router.push('/login');
     }
