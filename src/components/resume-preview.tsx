@@ -11,7 +11,7 @@ interface ResumePreviewProps {
 }
 
 const ResumePreview = React.forwardRef<HTMLDivElement, ResumePreviewProps>(({ resumeData }, ref) => {
-  const { personalInfo, experience, education, skills } = resumeData;
+  const { personalInfo, summary, experience, education, skills } = resumeData;
 
   return (
     <div ref={ref} className="bg-white text-gray-800 p-8 shadow-lg w-full h-full aspect-[210/297] overflow-auto">
@@ -40,6 +40,11 @@ const ResumePreview = React.forwardRef<HTMLDivElement, ResumePreviewProps>(({ re
           </div>
         </div>
       </header>
+
+      <section>
+        <h2 className="font-headline text-2xl font-bold border-b-2 border-gray-200 pb-2 mb-4">Summary</h2>
+        <p className="text-sm text-gray-600">{summary || 'A brief professional summary.'}</p>
+      </section>
 
       <Separator className="my-6" />
 

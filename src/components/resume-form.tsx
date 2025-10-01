@@ -10,8 +10,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { refineResumeContent } from '@/ai/flows/refine-resume-content';
+import { generateSummary } from '@/ai/flows/generate-summary';
 import { useToast } from '@/hooks/use-toast';
-import { Briefcase, GraduationCap, Lightbulb, Loader2, PlusCircle, Sparkles, Trash2, User, AlertCircle, Upload } from 'lucide-react';
+import { Briefcase, GraduationCap, Lightbulb, Loader2, PlusCircle, Sparkles, Trash2, User, AlertCircle, Upload, FileText } from 'lucide-react';
 
 interface ResumeFormProps {
   resumeData: ResumeData;
@@ -21,6 +22,7 @@ interface ResumeFormProps {
 const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, setResumeData }) => {
   const { toast } = useToast();
   const [refiningStates, setRefiningStates] = useState<Record<string, boolean>>({});
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const [newSkill, setNewSkill] = useState('');
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -28,7 +30,12 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, setResumeData }) =>
   const handleChange = (section: keyof ResumeData, index: number | null, field: string, value: string) => {
     setResumeData(prev => {
       if (index === null) {
-        return { ...prev, [section]: { ...(prev[section as keyof typeof prev] as object), [field]: value } };
+        if (section === 'personalInfo' || section === 'summary') {
+            if (typeof prev[section] === 'object' && prev[section] !== null) {
+                 return { ...prev, [section]: { ...(prev[section as keyof typeof prev] as object), [field]: value } };
+            }
+             return { ...prev, [section]: value };
+        }
       }
       const newSection = [...(prev[section as 'experience' | 'education' | 'skills'] || [])];
       newSection[index] = { ...newSection[index], [field]: value };
@@ -105,6 +112,34 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, setResumeData }) =>
       setRefiningStates(prev => ({...prev, [experienceId]: false}));
     }
   };
+  
+  const handleGenerateSummary = async () => {
+    setError(null);
+    setIsGeneratingSummary(true);
+    try {
+      if (resumeData.experience.length === 0 && resumeData.skills.length === 0) {
+        setError('Please add some experience or skills before generating a summary.');
+        return;
+      }
+      const result = await generateSummary({
+        experience: resumeData.experience,
+        skills: resumeData.skills,
+      });
+
+      if (result.summary) {
+        setResumeData(prev => ({ ...prev, summary: result.summary }));
+        toast({
+          title: 'Summary Generated',
+          description: 'A professional summary has been created for you.',
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      setError('Failed to generate summary.');
+    } finally {
+      setIsGeneratingSummary(false);
+    }
+  };
 
   return (
     <Card>
@@ -119,7 +154,7 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, setResumeData }) =>
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
-        <Accordion type="multiple" defaultValue={['personal-info', 'experience']} className="w-full">
+        <Accordion type="multiple" defaultValue={['personal-info', 'summary', 'experience']} className="w-full">
           <AccordionItem value="personal-info">
             <AccordionTrigger className="text-lg font-semibold"><User className="mr-2" />Personal Information</AccordionTrigger>
             <AccordionContent className="space-y-4 pt-4">
@@ -168,6 +203,20 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, setResumeData }) =>
                   <Label htmlFor="website">Website/Portfolio</Label>
                   <Input id="website" value={resumeData.personalInfo.website} onChange={e => handleChange('personalInfo', null, 'website', e.target.value)} />
                 </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+          
+          <AccordionItem value="summary">
+            <AccordionTrigger className="text-lg font-semibold"><FileText className="mr-2" />Professional Summary</AccordionTrigger>
+            <AccordionContent className="space-y-4 pt-4">
+              <div className="space-y-2">
+                  <Label htmlFor="summary">Summary</Label>
+                  <Textarea id="summary" rows={4} value={resumeData.summary} onChange={e => handleChange('summary', null, '', e.target.value)} />
+                  <Button variant="outline" size="sm" onClick={handleGenerateSummary} disabled={isGeneratingSummary}>
+                    {isGeneratingSummary ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                    Generate with AI
+                  </Button>
               </div>
             </AccordionContent>
           </AccordionItem>

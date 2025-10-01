@@ -10,6 +10,8 @@ export const initialData: ResumeData = {
     website: 'https://janedoe.dev',
     profilePicture: 'https://picsum.photos/seed/pfp/200/200',
   },
+  summary:
+    'Highly skilled Senior Software Engineer with over 5 years of experience in designing, developing, and deploying scalable web applications. Proven ability to lead projects, mentor junior engineers, and drive user engagement through innovative features. Proficient in React, Node.js, and cloud technologies.',
   experience: [
     {
       id: 'exp1',

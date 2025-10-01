@@ -32,6 +32,7 @@ export type Skill = {
 
 export type ResumeData = {
   personalInfo: PersonalInfo;
+  summary: string;
   experience: Experience[];
   education: Education[];
   skills: Skill[];
