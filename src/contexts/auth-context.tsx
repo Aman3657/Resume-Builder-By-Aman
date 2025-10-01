@@ -36,7 +36,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const result = await getRedirectResult(auth);
         if (result) {
-          // This is the signed-in user
+          // This is the signed-in user after a redirect.
           setUser(result.user);
           router.push('/');
         }
@@ -44,15 +44,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('Error getting redirect result:', error);
       }
       // In all cases, redirect processing is done, so we stop loading.
+      // The onAuthStateChanged listener below will handle subsequent state changes.
       setLoading(false);
     };
 
+    // We start by assuming we might be in a redirect flow.
+    setLoading(true);
     processRedirect();
 
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       // We set loading to false here as well, covering the case where
-      // the user was already logged in.
+      // the user was already logged in on a fresh page load (not a redirect).
       if (loading) {
         setLoading(false);
       }
@@ -68,11 +71,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const logout = async () => {
-    setLoading(true);
     await signOut(auth);
-    setUser(null);
+    // No need to set user to null here, onAuthStateChanged will handle it.
     router.push('/login');
-    setLoading(false);
   };
 
   const value = {

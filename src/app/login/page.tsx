@@ -12,12 +12,14 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
+    // If the user is logged in (and we're not in a loading state), redirect to home.
     if (!loading && user) {
       router.push('/');
     }
   }, [user, loading, router]);
 
-  if (loading || (!loading && user)) {
+  // While loading, or if the user exists (and we're about to redirect), show a spinner.
+  if (loading || user) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="h-16 w-16 animate-spin rounded-full border-4 border-dashed border-primary"></div>
@@ -25,6 +27,7 @@ export default function LoginPage() {
     );
   }
 
+  // Otherwise, show the login page.
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
       <div className="mb-8 flex items-center gap-3 text-center">
@@ -33,8 +36,8 @@ export default function LoginPage() {
       </div>
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Welcome Back</CardTitle>
-          <CardDescription>Sign in to continue to your dashboard.</CardDescription>
+          <CardTitle className="text-2xl">Welcome</CardTitle>
+          <CardDescription>Sign in to create and manage your resume.</CardDescription>
         </CardHeader>
         <CardContent>
           <Button className="w-full" onClick={login} size="lg">

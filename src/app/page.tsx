@@ -9,8 +9,6 @@ import { Button } from '@/components/ui/button';
 import { Download, LogOut } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import { useAuth } from '@/contexts/auth-context';
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { AuthGate } from '@/components/auth-gate';
 import {
   DropdownMenu,
@@ -26,8 +24,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 function HomePage() {
   const [resumeData, setResumeData] = useState<ResumeData>(initialData);
   const resumePreviewRef = useRef<HTMLDivElement>(null);
-  const { user, loading, logout } = useAuth();
-  const router = useRouter();
+  const { user, logout } = useAuth();
 
   const handlePrint = () => {
     window.print();
@@ -41,14 +38,6 @@ function HomePage() {
       .slice(0, 2)
       .join('');
   };
-
-  if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="h-16 w-16 animate-spin rounded-full border-4 border-dashed border-primary"></div>
-      </div>
-    );
-  }
 
   return (
     <AuthGate>
