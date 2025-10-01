@@ -92,3 +92,108 @@
     content: none !important;
   }
 }
+
+/* --- Template Styles --- */
+
+/* Standard Template (Default) */
+.template-standard {
+  /* Using default styles */
+}
+
+/* Modern Template */
+.template-modern {
+  font-family: 'PT Sans', sans-serif;
+  --template-primary: #1a202c;
+  --template-secondary: #2d3748;
+  --template-accent: #2b6cb0;
+}
+.template-modern .name {
+  color: var(--template-primary);
+  text-align: center;
+}
+.template-modern .header-section {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.template-modern .section-title {
+  color: var(--template-accent);
+  border-bottom-color: var(--template-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 1.25rem;
+}
+.template-modern .item-title {
+  color: var(--template-secondary);
+}
+.template-modern .skill-item {
+  background-color: var(--template-primary);
+  color: white;
+  border-radius: 0;
+}
+.template-modern .contact-info, .template-modern .links {
+  justify-content: center;
+}
+
+
+/* Classic Template */
+.template-classic {
+  font-family: 'Times New Roman', Times, serif;
+  --template-primary: #333;
+  --template-secondary: #555;
+  --template-accent: #000;
+}
+.template-classic .name {
+  font-family: 'Playfair Display', serif;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  text-align: center;
+  font-size: 2.5rem;
+  width: 100%;
+}
+.template-classic .header-section {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+.template-classic .contact-info {
+    justify-content: center;
+    width: 100%;
+    border-top: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    margin-top: 0.5rem;
+}
+.template-classic .links {
+    display: none; /* Hide for a more traditional look */
+}
+.template-classic .section-title {
+  text-align: center;
+  border: none;
+  font-weight: bold;
+  font-size: 1.1rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--template-primary);
+  padding-bottom: 0.25rem;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid var(--template-accent);
+}
+.template-classic .item-title {
+  font-weight: bold;
+  color: var(--template-secondary);
+}
+.template-classic .sub-title {
+    font-style: italic;
+}
+.template-classic .skill-item {
+  background: none;
+  border: 1px solid #ddd;
+  color: var(--template-secondary);
+  font-size: 0.8rem;
+  padding: 0.25rem 0.5rem;
+}
+.template-classic .date-range {
+    font-weight: bold;
+}

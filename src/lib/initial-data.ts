@@ -49,4 +49,5 @@ export const initialData: ResumeData = {
     { id: 'skill5', name: 'SQL' },
     { id: 'skill6', name: 'Cloud Services (AWS, GCP)' },
   ],
+  template: 'standard',
 };

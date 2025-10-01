@@ -36,4 +36,5 @@ export type ResumeData = {
   experience: Experience[];
   education: Education[];
   skills: Skill[];
+  template: 'standard' | 'modern' | 'classic';
 };

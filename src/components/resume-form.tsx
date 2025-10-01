@@ -8,11 +8,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { refineResumeContent } from '@/ai/flows/refine-resume-content';
 import { generateSummary } from '@/ai/flows/generate-summary';
 import { useToast } from '@/hooks/use-toast';
-import { Briefcase, GraduationCap, Lightbulb, Loader2, PlusCircle, Sparkles, Trash2, User, AlertCircle, Upload, FileText } from 'lucide-react';
+import { Briefcase, GraduationCap, Lightbulb, Loader2, PlusCircle, Sparkles, Trash2, User, AlertCircle, Upload, FileText, LayoutTemplate } from 'lucide-react';
 
 interface ResumeFormProps {
   resumeData: ResumeData;
@@ -27,18 +28,18 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, setResumeData }) =>
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleChange = (section: keyof ResumeData, index: number | null, field: string, value: string) => {
+  const handleChange = (section: keyof ResumeData, index: number | null, field: string, value: string | string[]) => {
     setResumeData(prev => {
       if (index === null) {
-        if (section === 'personalInfo' || section === 'summary') {
-            if (typeof prev[section] === 'object' && prev[section] !== null) {
+        if (section === 'personalInfo' || section === 'summary' || section === 'template') {
+            if (typeof prev[section] === 'object' && prev[section] !== null && !Array.isArray(prev[section])) {
                  return { ...prev, [section]: { ...(prev[section as keyof typeof prev] as object), [field]: value } };
             }
              return { ...prev, [section]: value };
         }
       }
       const newSection = [...(prev[section as 'experience' | 'education' | 'skills'] || [])];
-      newSection[index] = { ...newSection[index], [field]: value };
+      newSection[index!] = { ...newSection[index!], [field]: value };
       return { ...prev, [section]: newSection };
     });
   };
@@ -319,6 +320,28 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, setResumeData }) =>
                    </div>
                  ))}
                </div>
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="template">
+            <AccordionTrigger className="text-lg font-semibold"><LayoutTemplate className="mr-2" />Template</AccordionTrigger>
+            <AccordionContent className="space-y-4 pt-4">
+              <RadioGroup
+                value={resumeData.template}
+                onValueChange={(value) => handleChange('template', null, '', value as ResumeData['template'])}
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="standard" id="t-standard" />
+                  <Label htmlFor="t-standard">Standard</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="modern" id="t-modern" />
+                  <Label htmlFor="t-modern">Modern</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="classic" id="t-classic" />
+                  <Label htmlFor="t-classic">Classic</Label>
+                </div>
+              </RadioGroup>
             </AccordionContent>
           </AccordionItem>
         </Accordion>
