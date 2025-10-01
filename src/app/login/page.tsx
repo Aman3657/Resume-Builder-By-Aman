@@ -6,19 +6,19 @@ import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import { GoogleIcon, Logo } from '@/components/icons';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 export default function LoginPage() {
-  const { user, loading, login } = useAuth();
+  const { user, loading, login, error } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    // If we're not loading and the user is logged in, redirect them to the home page.
     if (!loading && user) {
       router.push('/');
     }
   }, [user, loading, router]);
 
-  // While loading, or if the user exists (and we're about to redirect), show a spinner.
   if (loading || user) {
     return (
       <div className="flex h-screen items-center justify-center bg-background">
@@ -27,7 +27,6 @@ export default function LoginPage() {
     );
   }
 
-  // Otherwise, show the login page.
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
       <div className="mb-8 flex items-center gap-3 text-center">
@@ -39,7 +38,16 @@ export default function LoginPage() {
           <CardTitle className="text-2xl">Welcome</CardTitle>
           <CardDescription>Sign in to create and manage your resume.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          {error && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Authentication Error</AlertTitle>
+              <AlertDescription>
+                {error.message} ({error.code})
+              </AlertDescription>
+            </Alert>
+          )}
           <Button className="w-full" onClick={login} size="lg">
             <GoogleIcon className="mr-2 h-5 w-5" />
             Sign in with Google

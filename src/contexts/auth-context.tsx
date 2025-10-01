@@ -9,12 +9,14 @@ import {
   signOut,
   User,
 } from 'firebase/auth';
+import { FirebaseError } from 'firebase/app';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  error: FirebaseError | null;
   login: () => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -22,6 +24,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
+  error: null,
   login: async () => {},
   logout: async () => {},
 });
@@ -29,35 +32,37 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<FirebaseError | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     const processRedirect = async () => {
       try {
+        setLoading(true);
         const result = await getRedirectResult(auth);
         if (result) {
-          // This is the signed-in user after a redirect.
           setUser(result.user);
           router.push('/');
         }
-      } catch (error) {
-        console.error('Error getting redirect result:', error);
+      } catch (e) {
+        if (e instanceof FirebaseError) {
+          console.error('Firebase Error:', e.code, e.message);
+          setError(e);
+        } else {
+          console.error('An unexpected error occurred:', e);
+        }
+      } finally {
+        setLoading(false);
       }
-      // In all cases, redirect processing is done, so we stop loading.
-      // The onAuthStateChanged listener below will handle subsequent state changes.
-      setLoading(false);
     };
 
-    // We start by assuming we might be in a redirect flow.
-    setLoading(true);
     processRedirect();
 
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-      // We set loading to false here as well, covering the case where
-      // the user was already logged in on a fresh page load (not a redirect).
+      // Only set loading to false if it's not already handling a redirect.
       if (loading) {
-        setLoading(false);
+         setLoading(false);
       }
     });
 
@@ -66,19 +71,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async () => {
     setLoading(true);
+    setError(null);
     const provider = new GoogleAuthProvider();
     await signInWithRedirect(auth, provider);
   };
 
   const logout = async () => {
     await signOut(auth);
-    // No need to set user to null here, onAuthStateChanged will handle it.
     router.push('/login');
   };
 
   const value = {
     user,
     loading,
+    error,
     login,
     logout,
   };
