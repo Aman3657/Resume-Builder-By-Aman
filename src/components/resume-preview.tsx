@@ -20,7 +20,7 @@ const ResumePreview = React.forwardRef<HTMLDivElement, ResumePreviewProps>(({ re
   };
 
   return (
-    <div ref={ref} className={`bg-white text-gray-800 p-8 shadow-lg w-full h-full aspect-[210/297] overflow-auto ${templateClasses[template]}`}>
+    <div ref={ref} className={`bg-white text-gray-800 p-8 shadow-lg w-full h-[calc(100%_-_1px)] aspect-[210/297] overflow-auto ${templateClasses[template]}`}>
       <header className="flex items-center mb-8 gap-6 header-section">
         {personalInfo.profilePicture && (
           <div className="relative h-24 w-24 rounded-full overflow-hidden flex-shrink-0">
