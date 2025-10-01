@@ -3,11 +3,11 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import {
   onAuthStateChanged,
-  GoogleAuthProvider,
-  signInWithRedirect,
-  getRedirectResult,
   signOut,
   User,
+  signInWithPhoneNumber,
+  ConfirmationResult,
+  RecaptchaVerifier,
 } from 'firebase/auth';
 import { FirebaseError } from 'firebase/app';
 import { auth } from '@/lib/firebase';
@@ -17,7 +17,9 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   error: FirebaseError | null;
-  login: () => Promise<void>;
+  confirmationResult: ConfirmationResult | null;
+  setupRecaptcha: (phoneNumber: string) => Promise<ConfirmationResult | null>;
+  verifyOtp: (otp: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -25,7 +27,9 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
   error: null,
-  login: async () => {},
+  confirmationResult: null,
+  setupRecaptcha: async () => null,
+  verifyOtp: async () => {},
   logout: async () => {},
 });
 
@@ -33,47 +37,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<FirebaseError | null>(null);
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-    const processRedirect = async () => {
-      try {
-        setLoading(true);
-        const result = await getRedirectResult(auth);
-        if (result) {
-          setUser(result.user);
-          router.push('/');
-        }
-      } catch (e) {
-        if (e instanceof FirebaseError) {
-          console.error('Firebase Error:', e.code, e.message);
-          setError(e);
-        } else {
-          console.error('An unexpected error occurred:', e);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    processRedirect();
-
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
-      // Only set loading to false if it's not already handling a redirect.
-      if (loading) {
-         setLoading(false);
-      }
+      setLoading(false);
     });
-
     return () => unsubscribe();
-  }, [router]);
+  }, []);
 
-  const login = async () => {
+  const setupRecaptcha = async (phoneNumber: string): Promise<ConfirmationResult | null> => {
     setLoading(true);
     setError(null);
-    const provider = new GoogleAuthProvider();
-    await signInWithRedirect(auth, provider);
+    try {
+      const recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        'size': 'invisible',
+      });
+      const result = await signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifier);
+      setConfirmationResult(result);
+      setLoading(false);
+      return result;
+    } catch (e) {
+      if (e instanceof FirebaseError) {
+        setError(e);
+      }
+      setLoading(false);
+      return null;
+    }
+  };
+
+  const verifyOtp = async (otp: string) => {
+    if (!confirmationResult) {
+      setError(new FirebaseError('auth/no-confirmation-result', 'No confirmation result found. Please request OTP first.'));
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      await confirmationResult.confirm(otp);
+      router.push('/');
+    } catch (e) {
+      if (e instanceof FirebaseError) {
+        setError(e);
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const logout = async () => {
@@ -85,7 +96,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     user,
     loading,
     error,
-    login,
+    confirmationResult,
+    setupRecaptcha,
+    verifyOtp,
     logout,
   };
 

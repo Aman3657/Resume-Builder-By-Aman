@@ -1,17 +1,22 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
-import { GoogleIcon, Logo } from '@/components/icons';
+import { Input } from '@/components/ui/input';
+import { Logo } from '@/components/icons';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Loader2 } from 'lucide-react';
+import { Label } from '@/components/ui/label';
 
 export default function LoginPage() {
-  const { user, loading, login, error } = useAuth();
+  const { user, loading, setupRecaptcha, verifyOtp, error } = useAuth();
   const router = useRouter();
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [otp, setOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
 
   useEffect(() => {
     if (!loading && user) {
@@ -19,8 +24,21 @@ export default function LoginPage() {
     }
   }, [user, loading, router]);
 
-  if (loading || user) {
-    return (
+  const handleSendOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const confirmation = await setupRecaptcha(phoneNumber);
+    if (confirmation) {
+      setOtpSent(true);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await verifyOtp(otp);
+  };
+  
+  if (loading && !otpSent) {
+     return (
       <div className="flex h-screen items-center justify-center bg-background">
         <div className="h-16 w-16 animate-spin rounded-full border-4 border-dashed border-primary"></div>
       </div>
@@ -29,6 +47,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
+      <div id="recaptcha-container"></div>
       <div className="mb-8 flex items-center gap-3 text-center">
         <Logo className="h-10 w-10 text-primary" />
         <h1 className="font-headline text-4xl font-bold">Resume Builder</h1>
@@ -36,7 +55,9 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Welcome</CardTitle>
-          <CardDescription>Sign in to create and manage your resume.</CardDescription>
+          <CardDescription>
+            {otpSent ? 'Enter the OTP sent to your phone.' : 'Sign in with your mobile number.'}
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {error && (
@@ -48,10 +69,47 @@ export default function LoginPage() {
               </AlertDescription>
             </Alert>
           )}
-          <Button className="w-full" onClick={login} size="lg">
-            <GoogleIcon className="mr-2 h-5 w-5" />
-            Sign in with Google
-          </Button>
+
+          {!otpSent ? (
+            <form onSubmit={handleSendOtp} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input
+                  id="phone"
+                  type="tel"
+                  placeholder="+1 555-555-5555"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Send OTP
+              </Button>
+            </form>
+          ) : (
+            <form onSubmit={handleVerifyOtp} className="space-y-4">
+              <div className="space-y-2">
+                 <Label htmlFor="otp">One-Time Password</Label>
+                <Input
+                  id="otp"
+                  type="text"
+                  placeholder="123456"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={loading}>
+                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Verify OTP &amp; Login
+              </Button>
+               <Button variant="link" size="sm" onClick={() => setOtpSent(false)} className="w-full">
+                Back to phone number entry
+              </Button>
+            </form>
+          )}
         </CardContent>
       </Card>
     </div>
