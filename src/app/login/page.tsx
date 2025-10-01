@@ -2,34 +2,61 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithRedirect, getRedirectResult } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/icons';
 import { useAuth } from '@/contexts/auth-context';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const [localLoading, setLocalLoading] = useState(true);
+
+  useEffect(() => {
+    const checkRedirect = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          router.push('/');
+        }
+      } catch (error) {
+        console.error('Error handling redirect result:', error);
+      } finally {
+        // Even if there's no redirect result, we are done checking.
+        setLocalLoading(false);
+      }
+    };
+    checkRedirect();
+  }, [router]);
 
   const handleGoogleSignIn = async () => {
     const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
-      router.push('/');
+      await signInWithRedirect(auth, provider);
     } catch (error) {
-      console.error('Error signing in with Google:', error);
+      console.error('Error initiating sign-in with redirect:', error);
     }
   };
 
   useEffect(() => {
-    if (!loading && user) {
+    if (!authLoading && user) {
       router.push('/');
     }
-  }, [user, loading, router]);
+  }, [user, authLoading, router]);
   
-  if(loading || user) return <div className="flex h-screen w-full items-center justify-center">Loading...</div>
+  const isLoading = authLoading || localLoading;
+
+  if (isLoading || (!authLoading && user)) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Loading...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
