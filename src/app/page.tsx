@@ -8,6 +8,7 @@ import ResumePreview from '@/components/resume-preview';
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 import { Logo } from '@/components/icons';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function HomePage() {
   const [resumeData, setResumeData] = useState<ResumeData>(initialData);
@@ -27,6 +28,7 @@ export default function HomePage() {
           </h1>
         </div>
         <div className="flex items-center gap-4">
+           <ThemeToggle />
           <Button onClick={handlePrint} size="lg">
             <Download className="mr-2 h-4 w-4" />
             Download PDF
