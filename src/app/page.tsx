@@ -22,24 +22,31 @@ export default function HomePage() {
   const handleDownload = async () => {
     const content = resumePreviewRef.current;
     if (!content) {
+      console.error('Resume preview content not found.');
       return;
     }
 
     setIsDownloading(true);
 
     try {
+      // Temporarily set a white background for consistent capture
       const originalBackgroundColor = content.style.backgroundColor;
       content.style.backgroundColor = '#ffffff';
-      
+
       const canvas = await html2canvas(content, {
-        scale: 2,
-        useCORS: true,
+        scale: 2, // Higher scale for better quality
+        useCORS: true, // Needed for external images
         allowTaint: true,
       });
-
+      
+      // Restore original background color after capture
       content.style.backgroundColor = originalBackgroundColor;
 
       const imgData = canvas.toDataURL('image/png');
+
+      if (!imgData || imgData === 'data:,') {
+        throw new Error('Failed to capture resume content as an image.');
+      }
       
       const pdf = new jsPDF({
         orientation: 'portrait',
@@ -53,11 +60,27 @@ export default function HomePage() {
       const canvasWidth = canvas.width;
       const canvasHeight = canvas.height;
 
+      // Calculate the aspect ratio
       const ratio = canvasWidth / canvasHeight;
-      const imgWidth = pdfWidth;
-      const imgHeight = pdfWidth / ratio;
+      let imgWidth = pdfWidth;
+      let imgHeight = pdfWidth / ratio;
+
+      // If the image is taller than the page, it needs to be split
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      // Add the first page
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pdfHeight;
+
+      // Add new pages if the content is taller than one page
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight; // Set the position for the next slice
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
+      }
       
-      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
       pdf.save('resume.pdf');
 
     } catch (error) {
