@@ -29,15 +29,18 @@ export default function HomePage() {
 
     try {
       // Temporarily set background to white for canvas capture
+      const originalBackgroundColor = content.style.backgroundColor;
       content.style.backgroundColor = '#ffffff';
+
       const canvas = await html2canvas(content, {
-        scale: 2,
+        scale: 2, // Higher scale for better quality
         useCORS: true,
       });
-      content.style.backgroundColor = ''; // Revert style change
+
+      // Revert style change
+      content.style.backgroundColor = originalBackgroundColor;
 
       const imgData = canvas.toDataURL('image/png');
-
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
@@ -49,24 +52,25 @@ export default function HomePage() {
       
       const canvasWidth = canvas.width;
       const canvasHeight = canvas.height;
+      
+      // Calculate the aspect ratio
       const ratio = canvasWidth / canvasHeight;
-
-      let imgWidth = pdfWidth;
-      let imgHeight = pdfWidth / ratio;
+      
+      // The width of the image in the PDF should be the full width of the page
+      const imgWidth = pdfWidth;
+      // Calculate the height of the image based on the aspect ratio
+      const imgHeight = pdfWidth / ratio;
       
       let heightLeft = imgHeight;
-      if (imgHeight > pdfHeight) {
-        imgHeight = pdfHeight;
-      }
-
-
       let position = 0;
 
+      // Add the first page
       pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
       heightLeft -= pdfHeight;
 
+      // Add new pages if the content is taller than one page
       while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
+        position = -heightLeft; // The position needs to be negative to show the next part of the image
         pdf.addPage();
         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
         heightLeft -= pdfHeight;
@@ -151,14 +155,14 @@ export default function HomePage() {
           </div>
 
           <div className="no-print fixed bottom-4 right-4 z-40 flex flex-col gap-3 md:hidden">
-             <Button size="lg" className="rounded-full shadow-lg" onClick={() => setShowMobileEditor(!showMobileEditor)}>
-               <Edit className="h-5 w-5" />
+             <Button size="lg" className="rounded-full shadow-lg h-14 w-14" onClick={() => setShowMobileEditor(!showMobileEditor)}>
+               <Edit className="h-6 w-6" />
              </Button>
-             <Button size="lg" className="rounded-full shadow-lg" onClick={handleDownload} disabled={isDownloading}>
+             <Button size="lg" className="rounded-full shadow-lg h-14 w-14" onClick={handleDownload} disabled={isDownloading}>
                 {isDownloading ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <Loader2 className="h-6 w-6 animate-spin" />
                 ) : (
-                  <Download className="h-5 w-5" />
+                  <Download className="h-6 w-6" />
                 )}
              </Button>
           </div>
