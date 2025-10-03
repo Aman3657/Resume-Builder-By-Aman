@@ -30,16 +30,17 @@ export default function HomePage() {
     try {
       const originalBackgroundColor = content.style.backgroundColor;
       content.style.backgroundColor = '#ffffff';
-
+      
       const canvas = await html2canvas(content, {
         scale: 2,
         useCORS: true,
-        allowTaint: true, // This helps with cross-origin images
+        allowTaint: true,
       });
-      
+
       content.style.backgroundColor = originalBackgroundColor;
 
       const imgData = canvas.toDataURL('image/png');
+      
       const pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
@@ -51,25 +52,14 @@ export default function HomePage() {
       
       const canvasWidth = canvas.width;
       const canvasHeight = canvas.height;
-      
+
       const ratio = canvasWidth / canvasHeight;
       const imgWidth = pdfWidth;
       const imgHeight = pdfWidth / ratio;
       
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pdfHeight;
-
-      while (heightLeft > 0) {
-        position = -heightLeft;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pdfHeight;
-      }
-      
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
       pdf.save('resume.pdf');
+
     } catch (error) {
       console.error('Error generating PDF:', error);
     } finally {
