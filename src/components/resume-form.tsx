@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
-import type { ResumeData, Experience, Education, Skill } from '@/lib/types';
+import React, from 'react';
+import type { ResumeData } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -13,7 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { refineResumeContent } from '@/ai/flows/refine-resume-content';
 import { generateSummary } from '@/ai/flows/generate-summary';
 import { useToast } from '@/hooks/use-toast';
-import { Briefcase, GraduationCap, Lightbulb, Loader2, PlusCircle, Sparkles, Trash2, User, AlertCircle, Upload, FileText, LayoutTemplate, Palette, Edit, X } from 'lucide-react';
+import { Briefcase, GraduationCap, Lightbulb, Loader2, PlusCircle, Sparkles, Trash2, User, AlertCircle, Upload, Palette } from 'lucide-react';
 
 interface ResumeFormProps {
   resumeData: ResumeData;
@@ -22,11 +22,11 @@ interface ResumeFormProps {
 
 const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, setResumeData }) => {
   const { toast } = useToast();
-  const [refiningStates, setRefiningStates] = useState<Record<string, boolean>>({});
-  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
-  const [newSkill, setNewSkill] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [refiningStates, setRefiningStates] = React.useState<Record<string, boolean>>({});
+  const [isGeneratingSummary, setIsGeneratingSummary] = React.useState(false);
+  const [newSkill, setNewSkill] = React.useState('');
+  const [error, setError] = React.useState<string | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleChange = (section: keyof ResumeData, index: number | null, field: string, value: string | string[]) => {
     setResumeData(prev => {
@@ -109,6 +109,11 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, setResumeData }) =>
     } catch (error) {
       console.error(error);
       setError('Failed to refine content.');
+      toast({
+        variant: "destructive",
+        title: "AI Error",
+        description: "Could not refine the content. Please try again later.",
+      });
     } finally {
       setRefiningStates(prev => ({...prev, [experienceId]: false}));
     }
@@ -137,6 +142,11 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, setResumeData }) =>
     } catch (error) {
       console.error(error);
       setError('Failed to generate summary.');
+       toast({
+        variant: "destructive",
+        title: "AI Error",
+        description: "Could not generate a summary. Please try again later.",
+      });
     } finally {
       setIsGeneratingSummary(false);
     }
@@ -209,7 +219,7 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, setResumeData }) =>
           </AccordionItem>
           
           <AccordionItem value="summary">
-            <AccordionTrigger className="text-lg font-semibold"><FileText className="mr-2" />Professional Summary</AccordionTrigger>
+            <AccordionTrigger className="text-lg font-semibold"><User className="mr-2" />Professional Summary</AccordionTrigger>
             <AccordionContent className="space-y-4 pt-4">
               <div className="space-y-2">
                   <Label htmlFor="summary">Summary</Label>

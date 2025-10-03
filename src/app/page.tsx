@@ -6,27 +6,42 @@ import { initialData } from '@/lib/initial-data';
 import ResumeForm from '@/components/resume-form';
 import ResumePreview from '@/components/resume-preview';
 import { Button } from '@/components/ui/button';
-import { Download, Loader2, Edit, X } from 'lucide-react';
+import { Download, Loader2, Edit, X, FileImage, FileText } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import { ThemeToggle } from '@/components/theme-toggle';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 export default function HomePage() {
   const [resumeData, setResumeData] = useState<ResumeData>(initialData);
-  const [isDownloading, setIsDownloading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [showMobileEditor, setShowMobileEditor] = useState(false);
   const resumePreviewRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
-  const handleDownload = async () => {
+  const captureCanvas = async (): Promise<HTMLCanvasElement | null> => {
     const content = resumePreviewRef.current;
     if (!content) {
-      console.error('Resume preview content not found.');
-      return;
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Resume preview content not found.",
+      });
+      return null;
     }
-
-    setIsDownloading(true);
 
     try {
       const canvas = await html2canvas(content, {
@@ -35,33 +50,78 @@ export default function HomePage() {
         allowTaint: true,
         backgroundColor: '#ffffff',
       });
-      
-      const imgData = canvas.toDataURL('image/png');
-
-      if (!imgData || imgData === 'data:,') {
-        throw new Error('Failed to capture resume content as an image.');
-      }
-      
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4',
-      });
-
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const canvasWidth = canvas.width;
-      const canvasHeight = canvas.height;
-      const ratio = canvasWidth / canvasHeight;
-      const pdfHeight = pdfWidth / ratio;
-      
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save('resume.pdf');
-
+      return canvas;
     } catch (error) {
-      console.error('Error generating PDF:', error);
-    } finally {
-      setIsDownloading(false);
+       console.error('Error capturing canvas:', error);
+       toast({
+        variant: "destructive",
+        title: "Capture Error",
+        description: "Failed to capture resume content as an image.",
+      });
+      return null;
     }
+  };
+
+  const handleDownloadPNG = async () => {
+    setIsProcessing(true);
+    const canvas = await captureCanvas();
+    if (canvas) {
+      const imgData = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.download = 'resume.png';
+      link.href = imgData;
+      link.click();
+    }
+    setIsProcessing(false);
+  };
+  
+  const handleDownloadPDF = async () => {
+    setIsProcessing(true);
+    const canvas = await captureCanvas();
+    if (canvas) {
+        const imgData = canvas.toDataURL('image/png');
+
+        if (!imgData || imgData === 'data:,') {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to create image data for PDF.",
+          });
+          setIsProcessing(false);
+          return;
+        }
+
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4',
+        });
+
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const canvasWidth = canvas.width;
+        const canvasHeight = canvas.height;
+        const ratio = canvasWidth / canvasHeight;
+        
+        const imgWidth = pdfWidth;
+        const imgHeight = imgWidth / ratio;
+        
+        let heightLeft = imgHeight;
+        let position = 0;
+
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
+
+        while (heightLeft > 0) {
+          position = heightLeft - imgHeight;
+          pdf.addPage();
+          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          heightLeft -= pdfHeight;
+        }
+        
+        pdf.save('resume.pdf');
+    }
+    setIsProcessing(false);
   };
 
   return (
@@ -75,14 +135,35 @@ export default function HomePage() {
         </div>
         <div className="hidden items-center gap-4 md:flex">
            <ThemeToggle />
-          <Button onClick={handleDownload} size="lg" disabled={isDownloading}>
-            {isDownloading ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Download className="mr-2 h-4 w-4" />
-            )}
-            Download PDF
-          </Button>
+           <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button size="lg" disabled={isProcessing}>
+                  {isProcessing ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="mr-2 h-4 w-4" />
+                  )}
+                  Download
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Choose Download Format</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    You can download your resume as a high-quality PNG image or a multi-page PDF document.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter className="sm:justify-center gap-4">
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <Button onClick={handleDownloadPNG} className="w-full sm:w-auto">
+                    <FileImage className="mr-2 h-4 w-4" /> Download PNG
+                  </Button>
+                  <AlertDialogAction onClick={handleDownloadPDF} className="w-full sm:w-auto">
+                     <FileText className="mr-2 h-4 w-4" /> Download PDF
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
         </div>
         <div className="md:hidden">
           <ThemeToggle />
@@ -138,13 +219,34 @@ export default function HomePage() {
              <Button size="lg" className="rounded-full shadow-lg h-14 w-14" onClick={() => setShowMobileEditor(!showMobileEditor)}>
                <Edit className="h-6 w-6" />
              </Button>
-             <Button size="lg" className="rounded-full shadow-lg h-14 w-14" onClick={handleDownload} disabled={isDownloading}>
-                {isDownloading ? (
-                  <Loader2 className="h-6 w-6 animate-spin" />
-                ) : (
-                  <Download className="h-6 w-6" />
-                )}
-             </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button size="lg" className="rounded-full shadow-lg h-14 w-14" disabled={isProcessing}>
+                  {isProcessing ? (
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  ) : (
+                    <Download className="h-6 w-6" />
+                  )}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Choose Download Format</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    You can download your resume as a high-quality PNG image or a multi-page PDF document.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter className="flex-col sm:flex-col gap-2">
+                   <Button onClick={handleDownloadPNG} className="w-full">
+                    <FileImage className="mr-2 h-4 w-4" /> Download PNG
+                  </Button>
+                  <AlertDialogAction onClick={handleDownloadPDF} className="w-full">
+                     <FileText className="mr-2 h-4 w-4" /> Download PDF
+                  </AlertDialogAction>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </main>
       </div>
