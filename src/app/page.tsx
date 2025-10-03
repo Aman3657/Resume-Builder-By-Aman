@@ -145,13 +145,30 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="no-print fixed bottom-4 right-4 z-40 flex flex-col gap-3 md:hidden">
-             <Button size="lg" className="rounded-full shadow-lg h-14 w-14" onClick={() => setShowMobileEditor(!showMobileEditor)}>
-               <Edit className="h-6 w-6" />
-             </Button>
-             <Button size="lg" className="rounded-full shadow-lg h-14 w-14" onClick={handleDownload} disabled={isProcessing}>
-                {isProcessing ? <Loader2 className="h-6 w-6 animate-spin" /> : <Download className="h-6 w-6" />}
-             </Button>
+          <div className="no-print fixed bottom-6 right-6 z-40 flex flex-col items-end gap-3 md:hidden">
+            <Button
+              size="lg"
+              className="h-12 rounded-full shadow-lg pl-5 pr-6"
+              onClick={() => setShowMobileEditor(!showMobileEditor)}
+            >
+              <Edit className="mr-2 h-5 w-5" />
+              Edit
+            </Button>
+            <Button
+              size="lg"
+              className="h-12 rounded-full shadow-lg pl-5 pr-6"
+              onClick={handleDownload}
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <>
+                  <Download className="mr-2 h-5 w-5" />
+                  Download
+                </>
+              )}
+            </Button>
           </div>
         </main>
       </div>
