@@ -28,16 +28,15 @@ export default function HomePage() {
     setIsDownloading(true);
 
     try {
-      // Temporarily set background to white for canvas capture
       const originalBackgroundColor = content.style.backgroundColor;
       content.style.backgroundColor = '#ffffff';
 
       const canvas = await html2canvas(content, {
-        scale: 2, // Higher scale for better quality
+        scale: 2,
         useCORS: true,
+        allowTaint: true, // This helps with cross-origin images
       });
-
-      // Revert style change
+      
       content.style.backgroundColor = originalBackgroundColor;
 
       const imgData = canvas.toDataURL('image/png');
@@ -53,24 +52,18 @@ export default function HomePage() {
       const canvasWidth = canvas.width;
       const canvasHeight = canvas.height;
       
-      // Calculate the aspect ratio
       const ratio = canvasWidth / canvasHeight;
-      
-      // The width of the image in the PDF should be the full width of the page
       const imgWidth = pdfWidth;
-      // Calculate the height of the image based on the aspect ratio
       const imgHeight = pdfWidth / ratio;
       
       let heightLeft = imgHeight;
       let position = 0;
 
-      // Add the first page
       pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
       heightLeft -= pdfHeight;
 
-      // Add new pages if the content is taller than one page
       while (heightLeft > 0) {
-        position = -heightLeft; // The position needs to be negative to show the next part of the image
+        position = -heightLeft;
         pdf.addPage();
         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
         heightLeft -= pdfHeight;
