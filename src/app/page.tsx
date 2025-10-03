@@ -32,7 +32,8 @@ export default function HomePage() {
   const resumePreviewRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  const captureCanvas = async (): Promise<HTMLCanvasElement | null> => {
+  const handleDownloadPNG = async () => {
+    setIsProcessing(true);
     const content = resumePreviewRef.current;
     if (!content) {
       toast({
@@ -40,45 +41,50 @@ export default function HomePage() {
         title: "Error",
         description: "Resume preview content not found.",
       });
-      return null;
+      setIsProcessing(false);
+      return;
     }
 
     try {
-      const canvas = await html2canvas(content, {
-        scale: 2, // Higher scale for better quality
+      const canvas = await html2canvas(content, { 
+        scale: 2,
         useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
       });
-      return canvas;
-    } catch (error) {
-       console.error('Error capturing canvas:', error);
-       toast({
-        variant: "destructive",
-        title: "Capture Error",
-        description: "Failed to capture resume content as an image.",
-      });
-      return null;
-    }
-  };
-
-  const handleDownloadPNG = async () => {
-    setIsProcessing(true);
-    const canvas = await captureCanvas();
-    if (canvas) {
       const imgData = canvas.toDataURL('image/png');
       const link = document.createElement('a');
       link.download = 'resume.png';
       link.href = imgData;
       link.click();
+    } catch (error) {
+      console.error('Error generating PNG:', error);
+      toast({
+        variant: "destructive",
+        title: "Download Error",
+        description: "Failed to generate PNG image.",
+      });
+    } finally {
+      setIsProcessing(false);
     }
-    setIsProcessing(false);
   };
   
   const handleDownloadPDF = async () => {
     setIsProcessing(true);
-    const canvas = await captureCanvas();
-    if (canvas) {
+    const content = resumePreviewRef.current;
+    if (!content) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Resume preview content not found.",
+      });
+      setIsProcessing(false);
+      return;
+    }
+
+    try {
+        const canvas = await html2canvas(content, { 
+          scale: 2,
+          useCORS: true,
+        });
         const imgData = canvas.toDataURL('image/png');
 
         if (!imgData || imgData === 'data:,') {
@@ -99,29 +105,34 @@ export default function HomePage() {
 
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = pdf.internal.pageSize.getHeight();
-        const canvasWidth = canvas.width;
-        const canvasHeight = canvas.height;
-        const ratio = canvasWidth / canvasHeight;
         
-        const imgWidth = pdfWidth;
-        const imgHeight = imgWidth / ratio;
+        const imgProps = pdf.getImageProperties(imgData);
+        const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
         
         let heightLeft = imgHeight;
         let position = 0;
 
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
         heightLeft -= pdfHeight;
 
         while (heightLeft > 0) {
           position = heightLeft - imgHeight;
           pdf.addPage();
-          pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+          pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
           heightLeft -= pdfHeight;
         }
         
         pdf.save('resume.pdf');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast({
+        variant: "destructive",
+        title: "Download Error",
+        description: "Failed to generate PDF document.",
+      });
+    } finally {
+      setIsProcessing(false);
     }
-    setIsProcessing(false);
   };
 
   return (
@@ -155,11 +166,11 @@ export default function HomePage() {
                 </AlertDialogHeader>
                 <AlertDialogFooter className="sm:justify-center gap-4">
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <Button onClick={handleDownloadPNG} className="w-full sm:w-auto">
-                    <FileImage className="mr-2 h-4 w-4" /> Download PNG
+                  <Button onClick={handleDownloadPNG} className="w-full sm:w-auto" disabled={isProcessing}>
+                    {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileImage className="mr-2 h-4 w-4" />} Download PNG
                   </Button>
-                  <AlertDialogAction onClick={handleDownloadPDF} className="w-full sm:w-auto">
-                     <FileText className="mr-2 h-4 w-4" /> Download PDF
+                  <AlertDialogAction onClick={handleDownloadPDF} className="w-full sm:w-auto" disabled={isProcessing}>
+                     {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />} Download PDF
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -237,11 +248,11 @@ export default function HomePage() {
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter className="flex-col sm:flex-col gap-2">
-                   <Button onClick={handleDownloadPNG} className="w-full">
-                    <FileImage className="mr-2 h-4 w-4" /> Download PNG
+                   <Button onClick={handleDownloadPNG} className="w-full" disabled={isProcessing}>
+                    {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileImage className="mr-2 h-4 w-4" />} Download PNG
                   </Button>
-                  <AlertDialogAction onClick={handleDownloadPDF} className="w-full">
-                     <FileText className="mr-2 h-4 w-4" /> Download PDF
+                  <AlertDialogAction onClick={handleDownloadPDF} className="w-full" disabled={isProcessing}>
+                     {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />} Download PDF
                   </AlertDialogAction>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                 </AlertDialogFooter>
