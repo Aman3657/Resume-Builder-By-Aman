@@ -91,7 +91,7 @@ export default function HomePage() {
         <div className="hidden items-center gap-4 md:flex">
            <ThemeToggle />
            <Button size="lg" onClick={handleDownload} disabled={isProcessing}>
-              {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+              {isProcessing && window.innerWidth >= 768 ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
               Download
             </Button>
         </div>
