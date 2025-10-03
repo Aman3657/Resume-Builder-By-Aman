@@ -22,8 +22,8 @@ export default function HomePage() {
   const { toast } = useToast();
 
   const generatePdf = async () => {
-    const input = resumePreviewRef.current;
-    if (!input) {
+    const previewElement = resumePreviewRef.current;
+    if (!previewElement) {
       toast({
         variant: "destructive",
         title: "Error",
@@ -31,31 +31,60 @@ export default function HomePage() {
       });
       return;
     }
+    
+    // Find the actual content div inside the preview
+    const contentToCapture = previewElement.querySelector('.resume-content-for-capture') as HTMLElement;
+    if(!contentToCapture) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not find resume content to capture.",
+      });
+      return;
+    }
 
     setIsProcessing(true);
     try {
-      const canvas = await html2canvas(input, {
-        scale: 2,
+      const canvas = await html2canvas(contentToCapture, {
+        scale: 2, // Higher scale for better quality
         useCORS: true,
         allowTaint: true,
-        backgroundColor: '#ffffff'
       });
-      const imgData = canvas.toDataURL('image/png');
 
-      if (!imgData || imgData === 'data:,') {
-        throw new Error('Failed to capture resume content as an image.');
-      }
+      const imgData = canvas.toDataURL('image/png');
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+
+      // A4 dimensions in pixels at 96 DPI are roughly 794x1123
+      // We will maintain aspect ratio
+      const a4Width = 794;
+      const a4Height = 1123;
       
       const pdf = new jsPDF({
         orientation: 'p',
         unit: 'px',
-        format: [canvas.width, canvas.height]
+        format: 'a4' // Use standard A4 size
       });
 
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      const ratio = imgWidth / pdfWidth;
+      const calculatedImgHeight = imgHeight / ratio;
+
+      let heightLeft = calculatedImgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, calculatedImgHeight);
+      heightLeft -= pdfHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - calculatedImgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, calculatedImgHeight);
+        heightLeft -= pdfHeight;
+      }
+      
       pdf.save('resume.pdf');
 
     } catch (error) {
@@ -108,8 +137,8 @@ export default function HomePage() {
           <div className="relative">
             <div className="sticky top-[80px]">
               <div className="resume-preview-container rounded-lg border bg-card shadow-lg aspect-[210/297] overflow-hidden">
-                <div className="h-full overflow-auto">
-                  <ResumePreview ref={resumePreviewRef} resumeData={resumeData} />
+                <div ref={resumePreviewRef} className="h-full overflow-auto">
+                  <ResumePreview resumeData={resumeData} />
                 </div>
               </div>
             </div>
@@ -120,8 +149,8 @@ export default function HomePage() {
         <main className="md:hidden">
           <div className="p-4">
              <div className="resume-preview-container rounded-lg border bg-card shadow-lg aspect-[210/297] overflow-hidden mx-auto">
-                <div className="h-full overflow-auto">
-                  <ResumePreview ref={resumePreviewRef} resumeData={resumeData} />
+                <div ref={resumePreviewRef} className="h-full overflow-auto">
+                  <ResumePreview resumeData={resumeData} />
                 </div>
               </div>
           </div>
