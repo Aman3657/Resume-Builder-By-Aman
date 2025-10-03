@@ -30,10 +30,10 @@ export default function HomePage() {
 
     try {
       const canvas = await html2canvas(content, {
-        scale: 2,
+        scale: 2, // Higher scale for better quality
         useCORS: true,
         allowTaint: true,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
       });
       
       const imgData = canvas.toDataURL('image/png');
