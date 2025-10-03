@@ -6,100 +6,20 @@ import { initialData } from '@/lib/initial-data';
 import ResumeForm from '@/components/resume-form';
 import ResumePreview from '@/components/resume-preview';
 import { Button } from '@/components/ui/button';
-import { Download, Edit, X, Loader2 } from 'lucide-react';
+import { Download, Edit, X } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 export default function HomePage() {
   const [resumeData, setResumeData] = useState<ResumeData>(initialData);
   const [showMobileEditor, setShowMobileEditor] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
   const resumePreviewRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
-  const generatePdf = async () => {
-    const previewElement = resumePreviewRef.current;
-    if (!previewElement) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Resume preview not found.',
-      });
-      return;
-    }
-
-    // Find the actual content div inside the preview
-    const contentToCapture = previewElement.querySelector('.resume-content-for-capture') as HTMLElement;
-    if (!contentToCapture) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Could not find resume content to capture.',
-      });
-      return;
-    }
-
-    setIsProcessing(true);
-    try {
-      const canvas = await html2canvas(contentToCapture, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        width: contentToCapture.offsetWidth,
-        height: contentToCapture.scrollHeight,
-      });
-
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: 'p',
-        unit: 'px',
-        format: 'a4',
-      });
-
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const canvasWidth = canvas.width;
-      const canvasHeight = canvas.height;
-      const ratio = canvasWidth / pdfWidth;
-      const calculatedImgHeight = canvasHeight / ratio;
-
-      let heightLeft = calculatedImgHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, calculatedImgHeight);
-      heightLeft -= pdfHeight;
-
-      while (heightLeft > 0) {
-        position = heightLeft - calculatedImgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, calculatedImgHeight);
-        heightLeft -= pdfHeight;
-      }
-
-      pdf.save('resume.pdf');
-    } catch (error) {
-      console.error(error);
-      toast({
-        variant: 'destructive',
-        title: 'Download Failed',
-        description: 'Could not generate PDF. Please try again.',
-      });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
   const handleDownload = () => {
-    // Check for mobile/tablet screen width
-    if (window.innerWidth < 768) {
-      generatePdf();
-    } else {
-      window.print();
-    }
+    window.print();
   };
 
   return (
@@ -113,8 +33,8 @@ export default function HomePage() {
         </div>
         <div className="hidden items-center gap-4 md:flex">
            <ThemeToggle />
-           <Button size="lg" onClick={handleDownload} disabled={isProcessing}>
-              {isProcessing && window.innerWidth >= 768 ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+           <Button size="lg" onClick={handleDownload}>
+              <Download className="mr-2 h-4 w-4" />
               Download
             </Button>
         </div>
@@ -142,7 +62,7 @@ export default function HomePage() {
         {/* Mobile Layout */}
         <main className="md:hidden">
           <div className="p-4">
-             <div className="resume-preview-container max-w-full rounded-lg border bg-card shadow-lg aspect-[210/297] overflow-hidden mx-auto">
+             <div className="resume-preview-container max-w-full mx-auto rounded-lg border bg-card shadow-lg aspect-[210/297] overflow-hidden">
                 <div ref={resumePreviewRef} className="h-full overflow-auto">
                   <ResumePreview resumeData={resumeData} />
                 </div>
@@ -181,13 +101,8 @@ export default function HomePage() {
               size="icon"
               className="h-14 w-14 rounded-full shadow-lg"
               onClick={handleDownload}
-              disabled={isProcessing}
             >
-              {isProcessing ? (
-                <Loader2 className="h-6 w-6 animate-spin" />
-              ) : (
-                <Download className="h-6 w-6" />
-              )}
+              <Download className="h-6 w-6" />
               <span className="sr-only">Download</span>
             </Button>
           </div>
