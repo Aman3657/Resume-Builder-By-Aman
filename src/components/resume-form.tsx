@@ -312,7 +312,7 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, setResumeData }) =>
                </div>
                <div className="flex flex-wrap gap-2">
                  {resumeData.skills.map((skill) => (
-                   <div key={skill.id} className="flex items-center gap-2 bg-primary/10 text-primary rounded-full px-3 py-1 text-sm font-medium">
+                   <div key={skill.id} className="flex items-center gap-2 bg-primary/10 text-primary-foreground rounded-full px-3 py-1 text-sm font-medium">
                      <span>{skill.name}</span>
                      <button onClick={() => removeItem('skills', skill.id)} className="text-destructive/70 hover:text-destructive">
                        <Trash2 className="h-3 w-3" />

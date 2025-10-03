@@ -42,8 +42,10 @@ export default function HomePage() {
           </div>
           <div className="relative">
             <div className="sticky top-[80px]">
-              <div className="resume-preview-container rounded-lg border bg-card shadow-lg">
-                <ResumePreview ref={resumePreviewRef} resumeData={resumeData} />
+              <div className="resume-preview-container rounded-lg border bg-card shadow-lg aspect-[210/297] overflow-hidden">
+                <div className="h-full overflow-auto">
+                  <ResumePreview ref={resumePreviewRef} resumeData={resumeData} />
+                </div>
               </div>
             </div>
           </div>
