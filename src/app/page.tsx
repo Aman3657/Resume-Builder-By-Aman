@@ -6,18 +6,77 @@ import { initialData } from '@/lib/initial-data';
 import ResumeForm from '@/components/resume-form';
 import ResumePreview from '@/components/resume-preview';
 import { Button } from '@/components/ui/button';
-import { Download, Edit, X } from 'lucide-react';
+import { Download, Edit, X, Loader2 } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 export default function HomePage() {
   const [resumeData, setResumeData] = useState<ResumeData>(initialData);
   const [showMobileEditor, setShowMobileEditor] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const resumePreviewRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
+
+  const generatePdf = async () => {
+    const input = resumePreviewRef.current;
+    if (!input) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Resume preview not found.",
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+    try {
+      const canvas = await html2canvas(input, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+      });
+      const imgData = canvas.toDataURL('image/png');
+
+      if (!imgData || imgData === 'data:,') {
+        throw new Error('Failed to capture resume content as an image.');
+      }
+      
+      const pdf = new jsPDF({
+        orientation: 'p',
+        unit: 'px',
+        format: [canvas.width, canvas.height]
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save('resume.pdf');
+
+    } catch (error) {
+      console.error(error);
+      toast({
+        variant: "destructive",
+        title: "Download Failed",
+        description: "Could not generate PDF. Please try again.",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   const handleDownload = () => {
-    window.print();
+    // Check for mobile/tablet screen width
+    if (window.innerWidth < 768) {
+      generatePdf();
+    } else {
+      window.print();
+    }
   };
 
   return (
@@ -31,8 +90,8 @@ export default function HomePage() {
         </div>
         <div className="hidden items-center gap-4 md:flex">
            <ThemeToggle />
-           <Button size="lg" onClick={handleDownload}>
-              <Download className="mr-2 h-4 w-4" />
+           <Button size="lg" onClick={handleDownload} disabled={isProcessing}>
+              {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
               Download
             </Button>
         </div>
@@ -90,8 +149,8 @@ export default function HomePage() {
              <Button size="lg" className="rounded-full shadow-lg h-14 w-14" onClick={() => setShowMobileEditor(!showMobileEditor)}>
                <Edit className="h-6 w-6" />
              </Button>
-             <Button size="lg" className="rounded-full shadow-lg h-14 w-14" onClick={handleDownload}>
-                <Download className="h-6 w-6" />
+             <Button size="lg" className="rounded-full shadow-lg h-14 w-14" onClick={handleDownload} disabled={isProcessing}>
+                {isProcessing ? <Loader2 className="h-6 w-6 animate-spin" /> : <Download className="h-6 w-6" />}
              </Button>
           </div>
         </main>
