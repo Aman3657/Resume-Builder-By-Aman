@@ -6,15 +6,17 @@ import { initialData } from '@/lib/initial-data';
 import ResumeForm from '@/components/resume-form';
 import ResumePreview from '@/components/resume-preview';
 import { Button } from '@/components/ui/button';
-import { Download, Loader2 } from 'lucide-react';
+import { Download, Loader2, Edit, X } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import { ThemeToggle } from '@/components/theme-toggle';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import { cn } from '@/lib/utils';
 
 export default function HomePage() {
   const [resumeData, setResumeData] = useState<ResumeData>(initialData);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [showMobileEditor, setShowMobileEditor] = useState(false);
   const resumePreviewRef = useRef<HTMLDivElement>(null);
 
   const handleDownload = async () => {
@@ -26,11 +28,13 @@ export default function HomePage() {
     setIsDownloading(true);
 
     try {
+      // Temporarily set background to white for canvas capture
+      content.style.backgroundColor = '#ffffff';
       const canvas = await html2canvas(content, {
-        scale: 2, // Higher scale for better quality
+        scale: 2,
         useCORS: true,
-        backgroundColor: '#ffffff',
       });
+      content.style.backgroundColor = ''; // Revert style change
 
       const imgData = canvas.toDataURL('image/png');
 
@@ -47,18 +51,24 @@ export default function HomePage() {
       const canvasHeight = canvas.height;
       const ratio = canvasWidth / canvasHeight;
 
+      let imgWidth = pdfWidth;
       let imgHeight = pdfWidth / ratio;
+      
       let heightLeft = imgHeight;
+      if (imgHeight > pdfHeight) {
+        imgHeight = pdfHeight;
+      }
+
 
       let position = 0;
 
-      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
       heightLeft -= pdfHeight;
 
-      while (heightLeft >= 0) {
+      while (heightLeft > 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
         heightLeft -= pdfHeight;
       }
       
@@ -72,14 +82,14 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <header className="no-print sticky top-0 z-20 flex items-center justify-between border-b bg-background/80 px-4 py-3 shadow-sm backdrop-blur-sm md:px-6 gap-4 bg-gradient-to-r from-slate-900 to-slate-800">
+      <header className="no-print sticky top-0 z-20 flex items-center justify-between border-b bg-gradient-to-r from-slate-900 to-slate-800/90 px-4 py-3 shadow-sm backdrop-blur-sm md:px-6">
         <div className="flex items-center gap-3">
           <Logo className="h-8 w-8 text-primary" />
-          <h1 className="font-headline text-2xl font-bold md:text-3xl">
+          <h1 className="font-headline text-xl font-bold md:text-3xl">
             Resume Builder
           </h1>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="hidden items-center gap-4 md:flex">
            <ThemeToggle />
           <Button onClick={handleDownload} size="lg" disabled={isDownloading}>
             {isDownloading ? (
@@ -90,9 +100,13 @@ export default function HomePage() {
             Download PDF
           </Button>
         </div>
+        <div className="md:hidden">
+          <ThemeToggle />
+        </div>
       </header>
       <div className="print-container container mx-auto max-w-7xl">
-        <main className="grid grid-cols-1 gap-8 p-4 md:grid-cols-2 md:p-6 lg:grid-cols-[1fr_minmax(0,1.1fr)]">
+        {/* Desktop Layout */}
+        <main className="hidden grid-cols-1 gap-8 p-4 md:grid md:grid-cols-2 md:p-6 lg:grid-cols-[1fr_minmax(0,1.1fr)]">
           <div className="no-print">
             <ResumeForm resumeData={resumeData} setResumeData={setResumeData} />
           </div>
@@ -104,6 +118,49 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
+          </div>
+        </main>
+        
+        {/* Mobile Layout */}
+        <main className="md:hidden">
+          <div className="p-4">
+             <div className="resume-preview-container rounded-lg border bg-card shadow-lg aspect-[210/297] overflow-hidden mx-auto">
+                <div className="h-full overflow-auto">
+                  <ResumePreview ref={resumePreviewRef} resumeData={resumeData} />
+                </div>
+              </div>
+          </div>
+
+          <div 
+            className={cn(
+              "no-print fixed inset-0 z-30 transform transition-transform duration-300 ease-in-out",
+              showMobileEditor ? "translate-y-0" : "translate-y-full"
+            )}
+          >
+            <div className="flex h-full flex-col bg-background">
+               <div className="flex justify-between items-center p-4 border-b">
+                 <h2 className="text-xl font-bold">Editor</h2>
+                 <Button variant="ghost" size="icon" onClick={() => setShowMobileEditor(false)}>
+                   <X />
+                 </Button>
+               </div>
+               <div className="flex-grow overflow-auto p-4">
+                 <ResumeForm resumeData={resumeData} setResumeData={setResumeData} />
+               </div>
+            </div>
+          </div>
+
+          <div className="no-print fixed bottom-4 right-4 z-40 flex flex-col gap-3 md:hidden">
+             <Button size="lg" className="rounded-full shadow-lg" onClick={() => setShowMobileEditor(!showMobileEditor)}>
+               <Edit className="h-5 w-5" />
+             </Button>
+             <Button size="lg" className="rounded-full shadow-lg" onClick={handleDownload} disabled={isDownloading}>
+                {isDownloading ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Download className="h-5 w-5" />
+                )}
+             </Button>
           </div>
         </main>
       </div>

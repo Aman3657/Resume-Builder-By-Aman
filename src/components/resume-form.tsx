@@ -13,7 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { refineResumeContent } from '@/ai/flows/refine-resume-content';
 import { generateSummary } from '@/ai/flows/generate-summary';
 import { useToast } from '@/hooks/use-toast';
-import { Briefcase, GraduationCap, Lightbulb, Loader2, PlusCircle, Sparkles, Trash2, User, AlertCircle, Upload, FileText, LayoutTemplate } from 'lucide-react';
+import { Briefcase, GraduationCap, Lightbulb, Loader2, PlusCircle, Sparkles, Trash2, User, AlertCircle, Upload, FileText, LayoutTemplate, Palette, Edit, X } from 'lucide-react';
 
 interface ResumeFormProps {
   resumeData: ResumeData;
@@ -143,11 +143,11 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, setResumeData }) =>
   };
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="border-none shadow-none md:border md:shadow-sm">
+      <CardHeader className="hidden md:block">
         <CardTitle className="font-headline text-2xl">Create Your Resume</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-0 md:p-6 md:pt-0">
         {error && (
           <Alert variant="destructive" className="mb-4">
             <AlertCircle className="h-4 w-4" />
@@ -312,7 +312,7 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, setResumeData }) =>
                </div>
                <div className="flex flex-wrap gap-2">
                  {resumeData.skills.map((skill) => (
-                   <div key={skill.id} className="flex items-center gap-2 bg-primary/10 text-primary-foreground rounded-full px-3 py-1 text-sm font-medium">
+                   <div key={skill.id} className="flex items-center gap-2 bg-primary/20 text-primary-foreground rounded-full px-3 py-1 text-sm font-medium">
                      <span>{skill.name}</span>
                      <button onClick={() => removeItem('skills', skill.id)} className="text-destructive/70 hover:text-destructive">
                        <Trash2 className="h-3 w-3" />
@@ -323,23 +323,30 @@ const ResumeForm: React.FC<ResumeFormProps> = ({ resumeData, setResumeData }) =>
             </AccordionContent>
           </AccordionItem>
           <AccordionItem value="template">
-            <AccordionTrigger className="text-lg font-semibold"><LayoutTemplate className="mr-2" />Template</AccordionTrigger>
+            <AccordionTrigger className="text-lg font-semibold"><Palette className="mr-2" />Template</AccordionTrigger>
             <AccordionContent className="space-y-4 pt-4">
               <RadioGroup
                 value={resumeData.template}
                 onValueChange={(value) => handleChange('template', null, '', value as ResumeData['template'])}
+                className="grid grid-cols-3 gap-4"
               >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="standard" id="t-standard" />
-                  <Label htmlFor="t-standard">Standard</Label>
+                <div>
+                  <RadioGroupItem value="standard" id="t-standard" className="peer sr-only" />
+                  <Label htmlFor="t-standard" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                    Standard
+                  </Label>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="modern" id="t-modern" />
-                  <Label htmlFor="t-modern">Modern</Label>
+                <div>
+                  <RadioGroupItem value="modern" id="t-modern" className="peer sr-only" />
+                  <Label htmlFor="t-modern" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                    Modern
+                  </Label>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="classic" id="t-classic" />
-                  <Label htmlFor="t-classic">Classic</Label>
+                <div>
+                  <RadioGroupItem value="classic" id="t-classic" className="peer sr-only" />
+                  <Label htmlFor="t-classic" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                    Classic
+                  </Label>
                 </div>
               </RadioGroup>
             </AccordionContent>
