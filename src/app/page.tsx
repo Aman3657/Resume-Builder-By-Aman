@@ -6,7 +6,7 @@ import { initialData } from '@/lib/initial-data';
 import ResumeForm from '@/components/resume-form';
 import ResumePreview from '@/components/resume-preview';
 import { Button } from '@/components/ui/button';
-import { Download, Edit, X } from 'lucide-react';
+import { Download, Edit, Loader2, X } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { cn } from '@/lib/utils';
@@ -16,7 +16,6 @@ export default function HomePage() {
   const [resumeData, setResumeData] = useState<ResumeData>(initialData);
   const [showMobileEditor, setShowMobileEditor] = useState(false);
   const resumePreviewRef = useRef<HTMLDivElement>(null);
-  const { toast } = useToast();
 
   const handleDownload = () => {
     window.print();
@@ -62,8 +61,8 @@ export default function HomePage() {
         {/* Mobile Layout */}
         <main className="md:hidden">
           <div className="p-4">
-             <div className="resume-preview-container max-w-full mx-auto rounded-lg border bg-card shadow-lg aspect-[210/297] overflow-hidden">
-                <div ref={resumePreviewRef} className="h-full overflow-auto">
+             <div className="resume-preview-container max-w-full mx-auto rounded-lg border bg-card shadow-lg">
+                <div ref={resumePreviewRef}>
                   <ResumePreview resumeData={resumeData} />
                 </div>
               </div>
