@@ -25,20 +25,20 @@ export default function HomePage() {
     const previewElement = resumePreviewRef.current;
     if (!previewElement) {
       toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Resume preview not found.",
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Resume preview not found.',
       });
       return;
     }
-    
+
     // Find the actual content div inside the preview
     const contentToCapture = previewElement.querySelector('.resume-content-for-capture') as HTMLElement;
-    if(!contentToCapture) {
+    if (!contentToCapture) {
       toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Could not find resume content to capture.",
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Could not find resume content to capture.',
       });
       return;
     }
@@ -46,31 +46,26 @@ export default function HomePage() {
     setIsProcessing(true);
     try {
       const canvas = await html2canvas(contentToCapture, {
-        scale: 2, // Higher scale for better quality
+        scale: 2,
         useCORS: true,
         allowTaint: true,
+        width: contentToCapture.offsetWidth,
+        height: contentToCapture.scrollHeight,
       });
 
       const imgData = canvas.toDataURL('image/png');
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-
-      // A4 dimensions in pixels at 96 DPI are roughly 794x1123
-      // We will maintain aspect ratio
-      const a4Width = 794;
-      const a4Height = 1123;
-      
       const pdf = new jsPDF({
         orientation: 'p',
         unit: 'px',
-        format: 'a4' // Use standard A4 size
+        format: 'a4',
       });
 
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
-      
-      const ratio = imgWidth / pdfWidth;
-      const calculatedImgHeight = imgHeight / ratio;
+      const canvasWidth = canvas.width;
+      const canvasHeight = canvas.height;
+      const ratio = canvasWidth / pdfWidth;
+      const calculatedImgHeight = canvasHeight / ratio;
 
       let heightLeft = calculatedImgHeight;
       let position = 0;
@@ -84,15 +79,14 @@ export default function HomePage() {
         pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, calculatedImgHeight);
         heightLeft -= pdfHeight;
       }
-      
-      pdf.save('resume.pdf');
 
+      pdf.save('resume.pdf');
     } catch (error) {
       console.error(error);
       toast({
-        variant: "destructive",
-        title: "Download Failed",
-        description: "Could not generate PDF. Please try again.",
+        variant: 'destructive',
+        title: 'Download Failed',
+        description: 'Could not generate PDF. Please try again.',
       });
     } finally {
       setIsProcessing(false);
@@ -148,7 +142,7 @@ export default function HomePage() {
         {/* Mobile Layout */}
         <main className="md:hidden">
           <div className="p-4">
-             <div className="resume-preview-container rounded-lg border bg-card shadow-lg aspect-[210/297] overflow-hidden mx-auto">
+             <div className="resume-preview-container max-w-full rounded-lg border bg-card shadow-lg aspect-[210/297] overflow-hidden mx-auto">
                 <div ref={resumePreviewRef} className="h-full overflow-auto">
                   <ResumePreview resumeData={resumeData} />
                 </div>
