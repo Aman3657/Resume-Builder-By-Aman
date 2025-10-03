@@ -29,19 +29,13 @@ export default function HomePage() {
     setIsDownloading(true);
 
     try {
-      // Temporarily set a white background for consistent capture
-      const originalBackgroundColor = content.style.backgroundColor;
-      content.style.backgroundColor = '#ffffff';
-
       const canvas = await html2canvas(content, {
-        scale: 2, // Higher scale for better quality
-        useCORS: true, // Needed for external images
+        scale: 2,
+        useCORS: true,
         allowTaint: true,
+        backgroundColor: '#ffffff'
       });
       
-      // Restore original background color after capture
-      content.style.backgroundColor = originalBackgroundColor;
-
       const imgData = canvas.toDataURL('image/png');
 
       if (!imgData || imgData === 'data:,') {
@@ -55,32 +49,12 @@ export default function HomePage() {
       });
 
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      
       const canvasWidth = canvas.width;
       const canvasHeight = canvas.height;
-
-      // Calculate the aspect ratio
       const ratio = canvasWidth / canvasHeight;
-      let imgWidth = pdfWidth;
-      let imgHeight = pdfWidth / ratio;
-
-      // If the image is taller than the page, it needs to be split
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      // Add the first page
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pdfHeight;
-
-      // Add new pages if the content is taller than one page
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight; // Set the position for the next slice
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pdfHeight;
-      }
+      const pdfHeight = pdfWidth / ratio;
       
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
       pdf.save('resume.pdf');
 
     } catch (error) {
