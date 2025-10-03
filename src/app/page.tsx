@@ -6,133 +6,19 @@ import { initialData } from '@/lib/initial-data';
 import ResumeForm from '@/components/resume-form';
 import ResumePreview from '@/components/resume-preview';
 import { Button } from '@/components/ui/button';
-import { Download, Loader2, Edit, X, FileImage, FileText } from 'lucide-react';
+import { Download, Loader2, Edit, X } from 'lucide-react';
 import { Logo } from '@/components/icons';
 import { ThemeToggle } from '@/components/theme-toggle';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
 export default function HomePage() {
   const [resumeData, setResumeData] = useState<ResumeData>(initialData);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [showMobileEditor, setShowMobileEditor] = useState(false);
   const resumePreviewRef = useRef<HTMLDivElement>(null);
-  const { toast } = useToast();
 
-  const handleDownloadPNG = async () => {
-    setIsProcessing(true);
-    const content = resumePreviewRef.current;
-    if (!content) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Resume preview content not found.",
-      });
-      setIsProcessing(false);
-      return;
-    }
-
-    try {
-      const canvas = await html2canvas(content, { 
-        scale: 2,
-        useCORS: true,
-      });
-      const imgData = canvas.toDataURL('image/png');
-      const link = document.createElement('a');
-      link.download = 'resume.png';
-      link.href = imgData;
-      link.click();
-    } catch (error) {
-      console.error('Error generating PNG:', error);
-      toast({
-        variant: "destructive",
-        title: "Download Error",
-        description: "Failed to generate PNG image.",
-      });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-  
-  const handleDownloadPDF = async () => {
-    setIsProcessing(true);
-    const content = resumePreviewRef.current;
-    if (!content) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Resume preview content not found.",
-      });
-      setIsProcessing(false);
-      return;
-    }
-
-    try {
-        const canvas = await html2canvas(content, { 
-          scale: 2,
-          useCORS: true,
-        });
-        const imgData = canvas.toDataURL('image/png');
-
-        if (!imgData || imgData === 'data:,') {
-          toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Failed to create image data for PDF.",
-          });
-          setIsProcessing(false);
-          return;
-        }
-
-        const pdf = new jsPDF({
-          orientation: 'portrait',
-          unit: 'mm',
-          format: 'a4',
-        });
-
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
-        
-        const imgProps = pdf.getImageProperties(imgData);
-        const imgHeight = (imgProps.height * pdfWidth) / imgProps.width;
-        
-        let heightLeft = imgHeight;
-        let position = 0;
-
-        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-        heightLeft -= pdfHeight;
-
-        while (heightLeft > 0) {
-          position = heightLeft - imgHeight;
-          pdf.addPage();
-          pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
-          heightLeft -= pdfHeight;
-        }
-        
-        pdf.save('resume.pdf');
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      toast({
-        variant: "destructive",
-        title: "Download Error",
-        description: "Failed to generate PDF document.",
-      });
-    } finally {
-      setIsProcessing(false);
-    }
+  const handleDownload = () => {
+    window.print();
   };
 
   return (
@@ -146,35 +32,10 @@ export default function HomePage() {
         </div>
         <div className="hidden items-center gap-4 md:flex">
            <ThemeToggle />
-           <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button size="lg" disabled={isProcessing}>
-                  {isProcessing ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <Download className="mr-2 h-4 w-4" />
-                  )}
-                  Download
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Choose Download Format</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    You can download your resume as a high-quality PNG image or a multi-page PDF document.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter className="sm:justify-center gap-4">
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <Button onClick={handleDownloadPNG} className="w-full sm:w-auto" disabled={isProcessing}>
-                    {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileImage className="mr-2 h-4 w-4" />} Download PNG
-                  </Button>
-                  <AlertDialogAction onClick={handleDownloadPDF} className="w-full sm:w-auto" disabled={isProcessing}>
-                     {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />} Download PDF
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+           <Button size="lg" onClick={handleDownload}>
+              <Download className="mr-2 h-4 w-4" />
+              Download
+            </Button>
         </div>
         <div className="md:hidden">
           <ThemeToggle />
@@ -230,34 +91,9 @@ export default function HomePage() {
              <Button size="lg" className="rounded-full shadow-lg h-14 w-14" onClick={() => setShowMobileEditor(!showMobileEditor)}>
                <Edit className="h-6 w-6" />
              </Button>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button size="lg" className="rounded-full shadow-lg h-14 w-14" disabled={isProcessing}>
-                  {isProcessing ? (
-                    <Loader2 className="h-6 w-6 animate-spin" />
-                  ) : (
-                    <Download className="h-6 w-6" />
-                  )}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Choose Download Format</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    You can download your resume as a high-quality PNG image or a multi-page PDF document.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter className="flex-col sm:flex-col gap-2">
-                   <Button onClick={handleDownloadPNG} className="w-full" disabled={isProcessing}>
-                    {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileImage className="mr-2 h-4 w-4" />} Download PNG
-                  </Button>
-                  <AlertDialogAction onClick={handleDownloadPDF} className="w-full" disabled={isProcessing}>
-                     {isProcessing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />} Download PDF
-                  </AlertDialogAction>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+             <Button size="lg" className="rounded-full shadow-lg h-14 w-14" onClick={handleDownload}>
+                <Download className="h-6 w-6" />
+             </Button>
           </div>
         </main>
       </div>
